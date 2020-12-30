@@ -1,5 +1,5 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable no-console */
-/* eslint-disable react/no-unused-state */
 import React, { Component } from 'react';
 import Particles from 'react-particles-js';
 import Clarifai from 'clarifai';
@@ -7,6 +7,7 @@ import Navigation from './components/Navigation/Navigation';
 import Logo from './components/Logo/Logo';
 import Rank from './components/Rank/Rank';
 import ImageLinkForm from './components/ImageLinkForm/ImageLinkForm';
+import FaceRecognition from './components/FaceRecognition/FaceRecognition';
 import './App.css';
 
 const particlesOptions = {
@@ -37,18 +38,30 @@ class App extends Component {
     super();
     this.state = {
       input: '',
+      imageUrl: '',
     };
   }
 
   onInputChange = (event) => {
-    console.log(event.target.value);
+    this.setState({ input: event.target.value });
   };
 
   onButtonSubmit = () => {
-    console.log('click');
+    const { input } = this.state;
+    this.setState({ imageUrl: input });
+    // setState는 여러 이유로 비동기식이다 그러므로
+    // 아래에서 우리가 predict 함수로 Clarifai를 호출하였을 때 아직 React가 윗줄의 setState를
+    // 완료하지 못하였을 수 있으므로 대신 input을 인수로 사용하였다.
+    app.models.predict(Clarifai.FACE_DETECT_MODEL, input).then(
+      (response) => {
+        console.log(response.outputs[0].data.regions[0].region_info.bounding_box);
+      },
+      (err) => {},
+    );
   };
 
   render() {
+    const { imageUrl } = this.state;
     return (
       <div className="App">
         <Particles className="particles" params={particlesOptions} />
@@ -56,7 +69,7 @@ class App extends Component {
         <Logo />
         <Rank />
         <ImageLinkForm inputChange={this.onInputChange} buttonSubmit={this.onButtonSubmit} />
-        {/* <FaceRecognition /> */}
+        <FaceRecognition imageUrl={imageUrl} />
       </div>
     );
   }
