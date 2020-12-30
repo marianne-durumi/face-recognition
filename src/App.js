@@ -1,5 +1,5 @@
-/* eslint-disable no-unused-vars */
 /* eslint-disable no-console */
+/* eslint-disable react/no-unused-state */
 import React, { Component } from 'react';
 import Particles from 'react-particles-js';
 import Clarifai from 'clarifai';
@@ -39,8 +39,26 @@ class App extends Component {
     this.state = {
       input: '',
       imageUrl: '',
+      box: {},
     };
   }
+
+  calculateFaceLocation = (data) => {
+    const clarifaiFace = data.outputs[0].data.regions[0].region_info.bounding_box;
+    const image = document.getElementById('inputimage');
+    const width = Number(image.width);
+    const height = Number(image.height);
+    return {
+      leftCol: clarifaiFace.left_col * width,
+      topRow: clarifaiFace.top_row * height,
+      rightCol: width - clarifaiFace.right_col * width,
+      bottomRow: height - clarifaiFace.bottom_row * height,
+    };
+  };
+
+  displayFaceBox = (box) => {
+    this.setState({ box });
+  };
 
   onInputChange = (event) => {
     this.setState({ input: event.target.value });
@@ -52,16 +70,17 @@ class App extends Component {
     // setState는 여러 이유로 비동기식이다 그러므로
     // 아래에서 우리가 predict 함수로 Clarifai를 호출하였을 때 아직 React가 윗줄의 setState를
     // 완료하지 못하였을 수 있으므로 대신 input을 인수로 사용하였다.
-    app.models.predict(Clarifai.FACE_DETECT_MODEL, input).then(
-      (response) => {
-        console.log(response.outputs[0].data.regions[0].region_info.bounding_box);
-      },
-      (err) => {},
-    );
+    app.models
+      .predict(Clarifai.FACE_DETECT_MODEL, input)
+      .then((response) => {
+        this.displayFaceBox(this.calculateFaceLocation(response));
+      })
+      .catch((err) => console.log(err));
   };
 
   render() {
     const { imageUrl } = this.state;
+    const { box } = this.state;
     return (
       <div className="App">
         <Particles className="particles" params={particlesOptions} />
@@ -69,7 +88,7 @@ class App extends Component {
         <Logo />
         <Rank />
         <ImageLinkForm inputChange={this.onInputChange} buttonSubmit={this.onButtonSubmit} />
-        <FaceRecognition imageUrl={imageUrl} />
+        <FaceRecognition imageUrl={imageUrl} box={box} />
       </div>
     );
   }
