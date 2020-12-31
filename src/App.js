@@ -1,9 +1,11 @@
+/* eslint-disable no-nested-ternary */
 /* eslint-disable no-console */
-/* eslint-disable react/no-unused-state */
 import React, { Component } from 'react';
 import Particles from 'react-particles-js';
 import Clarifai from 'clarifai';
 import Navigation from './components/Navigation/Navigation';
+import Signin from './components/Signin/Signin';
+import Register from './components/Register/Register';
 import Logo from './components/Logo/Logo';
 import Rank from './components/Rank/Rank';
 import ImageLinkForm from './components/ImageLinkForm/ImageLinkForm';
@@ -40,6 +42,8 @@ class App extends Component {
       input: '',
       imageUrl: '',
       box: {},
+      route: 'signin',
+      isSignedIn: false,
     };
   }
 
@@ -78,17 +82,33 @@ class App extends Component {
       .catch((err) => console.log(err));
   };
 
+  onRouteChange = (place) => {
+    if (place === 'signout') {
+      this.setState({ isSignedIn: false });
+    } else if (place === 'home') {
+      this.setState({ isSignedIn: true });
+    }
+    this.setState({ route: place });
+  };
+
   render() {
-    const { imageUrl } = this.state;
-    const { box } = this.state;
+    const { route, imageUrl, box, isSignedIn } = this.state;
     return (
       <div className="App">
         <Particles className="particles" params={particlesOptions} />
-        <Navigation />
-        <Logo />
-        <Rank />
-        <ImageLinkForm inputChange={this.onInputChange} buttonSubmit={this.onButtonSubmit} />
-        <FaceRecognition imageUrl={imageUrl} box={box} />
+        <Navigation isSignedIn={isSignedIn} routeChange={this.onRouteChange} />
+        {route === 'home' ? (
+          <>
+            <Logo />
+            <Rank />
+            <ImageLinkForm inputChange={this.onInputChange} buttonSubmit={this.onButtonSubmit} />
+            <FaceRecognition imageUrl={imageUrl} box={box} />
+          </>
+        ) : route === 'signin' ? (
+          <Signin routeChange={this.onRouteChange} />
+        ) : (
+          <Register routeChange={this.onRouteChange} />
+        )}
       </div>
     );
   }
